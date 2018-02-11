@@ -21,20 +21,35 @@ else
     exit 0
 fi
 
-[ -n "$DEBUG" ] && echo "arpinging $miner..."
-/usr/sbin/arping -c 3 $miner -q
-retcode=$?
-
-if [[ "$retcode" -ne 0 ]]; then
-    echo "Error: host $miner dead (no arping reply)."
-    exit 2
+# check for data freshness
+fresh=""
+if [[ -f $tmpfile ]]; then
+    fileage=`/usr/bin/stat -c %Y $tmpfile`
+    now=`/bin/date +%s`
+    let diff=$now-$fileage
+    if [ "$diff" -le "90" ]; then
+	fresh="yes"
+    fi
 fi
 
-/usr/bin/wget -T 10 -q --post-data='{"id":0,"jsonrpc":"2.0","method":"miner_getstat1"}' -O - http://$miner:3333 | jq -r .result[0,1,2,3,6] >$tmpfile
-retcode=$?
-if [[ "$retcode" -ne 0 ]]; then
-    echo "Error: wget could not connect to $miner."
-    exit 2
+if [[ -z "$fresh" ]]; then
+    [ -n "$DEBUG" ] && echo "DEBUG INFO: data is not fresh, polling.\narpinging $miner..."
+    /usr/sbin/arping -c 3 $miner -q
+    retcode=$?
+
+    if [[ "$retcode" -ne 0 ]]; then
+	echo "Error: host $miner dead (no arping reply)."
+	exit 2
+    fi
+
+    /usr/bin/wget -T 10 -q --post-data='{"id":0,"jsonrpc":"2.0","method":"miner_getstat1"}' -O - http://$miner:3333 | jq -r .result[0,1,2,3,6] >$tmpfile
+    retcode=$?
+    if [[ "$retcode" -ne 0 ]]; then
+	echo "Error: wget could not connect to $miner."
+	exit 2
+    fi
+else
+    [ -n "$DEBUG" ] && echo "DEBUG INFO: data is fresh, reusing tmpfile."
 fi
 
 [ -n "$DEBUG" ] && (echo "============ DEBUG INFO: tmpfile follows. ========== "; cat $tmpfile; echo "============")
@@ -78,7 +93,8 @@ case "$outformat" in
 	;;
     graph)
 	echo "uptime=$uptime_hr"
-	echo "total_hr=$total_hr"
+	let total_hr_abs=${total_hr}*1000
+	echo "total_hr=$total_hr_abs"
 	echo "gpu_no=$gpu_no"
 	for (( i=0; i<$gpu_no; i++ )); do
 	    let gpu_hr_abs=${gpu_hrs[$i]}*1000
@@ -109,4 +125,3 @@ case "$outformat" in
 	;;
 esac
 
-[ -z "$DEBUG" ] && rm $tmpfile

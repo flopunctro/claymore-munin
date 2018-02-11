@@ -36,81 +36,78 @@ fi
 
 pollsuccessful=""
 # the following script should populate our variables
-eval $(/root/bin/minerpoll.sh $MINERHOST graph)
+eval $(/home/claymore-munin/minerpoll.sh $MINERHOST graph)
 retcode=$?
 
 [[ "$retcode" -ne 0 ]] && exit $retcode
 
 function print_config {
-	echo "multigraph uptime
+	echo "multigraph uptime_$MINERHOST
 graph_title $MINERHOST Uptime (hours)
-graph_category uptime
+graph_category mining
 graph_vlabel hrs
 graph_args -l 0
-uptime.label Hours
-uptime.min 0
-uptime.info Uptime in hours
-multigraph totalhashrate
+uptime_$MINERHOST.label Hours
+uptime_$MINERHOST.min 0
+uptime_$MINERHOST.info Uptime in hours
+multigraph totalhashrate_$MINERHOST
 graph_title $MINERHOST Total Hashrate
-graph_category hashrate
-graph_vlabel MH/s
+graph_category mining
+graph_vlabel H/s
 graph_args -l 0 --base 1000 --units-exponent 6
-totalhr.label Hashrate
-totalhr.min 0
-totalhr.info Total Hashrate
-multigraph gpuhashrate
+totalhr_$MINERHOST.label Hashrate
+totalhr_$MINERHOST.min 0
+totalhr_$MINERHOST.info Total Hashrate
+multigraph gpuhashrate_$MINERHOST
 graph_title $MINERHOST GPU Hashrates
-graph_category hashrate
-graph_vlabel MH/s
+graph_category mining
+graph_vlabel H/s
 graph_args -l 0 --base 1000 --units-exponent 6
 graph_info Individual GPU hashrates"
     for (( i=0; i<$gpu_no; i++ )); do
-	echo "gpuhr_$i.label GPU$i"
+	echo "gpuhr_${MINERHOST}_$i.label GPU$i"
     done
-    echo "multigraph gputemp
+    echo "multigraph_$MINERHOST gputemp
 graph_title $MINERHOST GPU temperatures
-graph_category temperature
+graph_category mining
 graph_vlabel deg C
 graph_args -l 0
 graph_info Individual GPU temperatures"
     for (( i=0; i<$gpu_no; i++ )); do
-	echo "gputemp_$i.label GPU$i"
-	echo "gputemp_$i.min 0"
-	echo "gputemp_$i.max 100"
+	echo "gputemp_${MINERHOST}_$i.label GPU$i"
+	echo "gputemp_${MINERHOST}_$i.min 0"
+	echo "gputemp_${MINERHOST}_$i.max 100"
     done
-    echo "multigraph gpufan
+    echo "multigraph gpufan_${MINERHOST}
 graph_title $MINERHOST GPU fan speeds
-graph_category fanspeed
+graph_category mining
 graph_vlabel %
 graph_args -l 0
 graph_info Individual GPU fan speeds"
     for (( i=0; i<$gpu_no; i++ )); do
-	echo "gpufan_$i.label GPU$i"
-	echo "gpufan_$i.min 0"
-	echo "gpufan_$i.max 100"
+	echo "gpufan_${MINERHOST}_$i.label GPU$i"
+	echo "gpufan_${MINERHOST}_$i.min 0"
+	echo "gpufan_${MINERHOST}_$i.max 100"
     done
-echo "."
-
 }
 
 function print_values {
-    echo "multigraph uptime
-uptime.value $uptime
-multigraph totalhashrate
-totalhr.value $total_hr
-multigraph gpuhashrate"
+    echo "multigraph uptime_${MINERHOST}
+uptime_${MINERHOST}.value $uptime
+multigraph totalhashrate_${MINERHOST}
+totalhr_${MINERHOST}.value $total_hr
+multigraph gpuhashrate_${MINERHOST}"
     for (( i=0; i<$gpu_no; i++ )); do
-	echo "gpuhr_$i.value ${gpu_hr[$i]}"
+	echo "gpuhr_${MINERHOST}_$i.value ${gpu_hr[$i]}"
     done
-    echo "multigraph gputemp"
+    echo "multigraph gputemp_${MINERHOST}"
     for (( i=0; i<$gpu_no; i++ )); do
-	echo "gputemp_$i.value ${gpu_temp[$i]}"
+	echo "gputemp_${MINERHOST}_$i.value ${gpu_temp[$i]}"
     done
-    echo "multigraph gpufan"
+    echo "multigraph gpufan_${MINERHOST}"
     for (( i=0; i<$gpu_no; i++ )); do
-	echo "gpufan_$i.value ${gpu_fan[$i]}"
+	echo "gpufan_${MINERHOST}_$i.value ${gpu_fan[$i]}"
     done
-    echo "."
 }
 
 case $1 in
