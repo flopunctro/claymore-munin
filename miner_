@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# -*- sh -*-
+
+: << =cut
+
+=head1 NAME
+
+miner_ - Wildcard plugin to monitor claymore miner stats
+
+=head1 CONFIGURATION
+
+This plugin requires no configuration.
+
+=head1 AUTHOR
+
+Florin Popovici, inspired by the if_ plugin
+
+=head1 LICENSE
+
+Dont really care at this time. GPL, freeware, whatever.
+
+=head1 MAGIC MARKERS
+
+ #%# family=auto
+ #%# capabilities=autoconf suggest
+
+=cut
+
+MINERHOST=${0##*miner_}
+
+case $1 in
+    autoconf)
+	echo yes
+	exit 0
+	;;
+    suggest)
+	# tbd
+	exit 0
+	;;
+    config)
+	echo "graph_title $MINERHOST stats"
+	#... tbd
+	exit 0
+	;;
+esac
+
+
