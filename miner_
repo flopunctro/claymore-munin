@@ -10,7 +10,7 @@ miner_ - Wildcard plugin to monitor claymore miner stats
 
 =head1 CONFIGURATION
 
-This plugin requires no configuration.
+This plugin should be run as root, because the poller script calls arping.
 
 =head1 AUTHOR
 
@@ -67,7 +67,7 @@ graph_info Individual GPU hashrates"
     for (( i=0; i<$gpu_no; i++ )); do
 	echo "gpuhr_${MINERHOST}_$i.label GPU$i"
     done
-    echo "multigraph_$MINERHOST gputemp
+    echo "multigraph gputemp_${MINERHOST}
 graph_title $MINERHOST GPU temperatures
 graph_category mining
 graph_vlabel deg C
