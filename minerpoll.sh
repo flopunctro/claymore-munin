@@ -27,9 +27,15 @@ if [[ -f $tmpfile ]]; then
     fileage=`/usr/bin/stat -c %Y $tmpfile`
     now=`/bin/date +%s`
     let diff=$now-$fileage
-    if [ "$diff" -le "90" ]; then
+    if [ "$diff" -le "60" ]; then
 	fresh="yes"
     fi
+fi
+
+# DO NOT POLL WHEN GRAPHING -- only from supervisor
+if [[ "$outformat" = "graph" && -f $tmpfile ]]; then
+    fresh="dontcare-graph"
+    [ -n "$DEBUG" ] && echo "DEBUG INFO: graph output selected, skipping poll and using existing out file"
 fi
 
 if [[ -z "$fresh" ]]; then
@@ -45,8 +51,14 @@ if [[ -z "$fresh" ]]; then
     /usr/bin/wget -T 10 -q --post-data='{"id":0,"jsonrpc":"2.0","method":"miner_getstat1"}' -O - http://$miner:3333 | jq -r .result[0,1,2,3,6] >$tmpfile
     retcode=$?
     if [[ "$retcode" -ne 0 ]]; then
-	echo "Error: wget could not connect to $miner."
-	exit 2
+	# retry one time, after 30 seconds
+	sleep 30
+	/usr/bin/wget -T 10 -q --post-data='{"id":0,"jsonrpc":"2.0","method":"miner_getstat1"}' -O - http://$miner:3333 | jq -r .result[0,1,2,3,6] >$tmpfile
+	retcode=$?
+	if [[ "$retcode" -ne 0 ]]; then
+	    echo "Error: wget could not connect to $miner."
+	    exit 2
+	fi
     fi
 else
     [ -n "$DEBUG" ] && echo "DEBUG INFO: data is fresh, reusing tmpfile."
